@@ -29,7 +29,7 @@ try:
         detector_socket.sendall(b'%f,%f' % (5, 2))
 
         print("Receiving controller response")
-        response = s.recv(1024)
+        response = detector_socket.recv(1024)
         print("Received response:", response.decode())
 finally:
     camera.stop_recording()
