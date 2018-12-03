@@ -16,6 +16,8 @@ dt = 18
 resolution = 1333
 tolerance = 5
 dtime = 0.1
+dtime2 = 5
+speed = 15
 
 class MotorController():
     def __init__(self):
@@ -30,39 +32,40 @@ class MotorController():
         GPIO.setup(dt,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
         
         self.angle = 0
-        self.speed = 15
+        self.counter = 0
+        self.self.start = 0
+        self.start = clock()
+        self.self.start2 = start
+        self.clkLastState = GPIO.input(clk)
     
     def control(setpoint):
-        global resolution,tolerance,dtime
-        counter = 0;
-        clkLastState = GPIO.input(clk)
-        delta = setpoint - self.angle
+        global resolution,tolerance,dtime,dtime2,speed
         try:
-            self.myMotor.setSpeed(self.speed)
-            start = clock()
-            while True:
-                if delta > float(tolerance/resolution):
-                    self.myMotor.run(Adafruit_MotorHAT.FORWARD)
-                elif delta < -float(tolerance/resolution):
-                    self.myMotor.run(Adafruit_MotorHAT.BACKWARD)
+            self.myMotor.setSpeed(speed)
+            
+            if setpoint > angle + float(tolerance/resolution):
+                self.myMotor.run(Adafruit_MotorHAT.FORWARD)
+            elif setpoint < angle - float(tolerance/resolution):
+                self.myMotor.run(Adafruit_MotorHAT.BACKWARD)
+            else:
+                self.myMotor.run(Adafruit_MotorHAT.RELEASE)
+            dtState = GPIO.input(dt)
+            clkState = GPIO.input(clk)
+            if clkState != self.clkLastState:
+                if dtState != clkState:
+                    self.counter += 1
                 else:
-                    break;
-                dtState = GPIO.input(dt)
-                clkState = GPIO.input(clk)
-                if clkState != clkLastState:
-                    if dtState != clkState:
-                        counter += 1
-                    else:
-                        counter -= 1
-                clkLastState = clkState
-                if clock() > start + dtime:
-                    delta -= float(counter)/(float(resolution))
-                    counter = 0
-                    start = clock()
+                    self.counter -= 1
+            self.clkLastState = clkState
+            if clock() > self.start + dtime:
+                self.angle = self.angle + float(counter)/(float(resolution))
+                self.counter = 0
+                self.start = clock()
+            if clock() > self.start2 + dtime2:
+                self.start2 = clock()
+                print "Send Image"
         finally:
-            GPIO.cleanup()
-            self.myMotor.run(Adafruit_MotorHAT.RELEASE)
-            self.angle = setpoint
+            pass
 
     # recommended for auto-disabling motors on shutdown!
     def turnOffMotors():
