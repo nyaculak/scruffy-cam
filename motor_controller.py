@@ -18,8 +18,8 @@ tolerance = 5
 dtime = 0.1
 
 class MotorController():
-    def __init__(self):
-        global clk, dt
+	def __init__(self):
+		global clk, dt
 		mh = Adafruit_MotorHAT(addr=0x60)
 		atexit.register(turnOffMotors)
 		self.myMotor = mh.getMotor(3)
@@ -32,7 +32,7 @@ class MotorController():
 		self.angle = 0
 		self.speed = 15
     
-    def control(setpoint):
+	def control(setpoint):
 		global resolution,tolerance,dtime
 		counter = 0;
 		clkLastState = GPIO.input(clk)
