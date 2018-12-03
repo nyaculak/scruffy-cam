@@ -27,12 +27,12 @@ try:
         player.stdin.write(stream_data)
         
         print("Reading detector data")
-        detector_data = detector_connection.read(1024)
+        detector_data = detector_connection.recv(1024)
         # if not detector_data:
         #     break
 
         print("Writing to detector")
-        
+
             
 finally:
     stream_connection.close()

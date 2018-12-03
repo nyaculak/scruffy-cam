@@ -17,7 +17,6 @@ try:
     camera = picamera.PiCamera()
     camera.resolution = (640, 480)
     camera.framerate = 24
-    camera = init_camera()
     camera.start_preview()
     time.sleep(2)
     camera.start_recording(stream_connection, format='h264')
