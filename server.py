@@ -23,20 +23,14 @@ try:
     while True:
         print("Reading stream data")
         stream_data = stream_connection.read(1024)
-        # if not stream_data:
-        #     break
         player.stdin.write(stream_data)
         
         print("Reading detector data")
         detector_data = detector_connection.recv(1024)
-        # if not detector_data:
-        #     break
 
         print("Writing to detector")
         response = "60"
-        detector_connection.sendall(str(response).encode())
-
-            
+        detector_connection.sendall(str(response).encode())           
 finally:
     stream_connection.close()
     stream_socket.close()
