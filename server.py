@@ -10,6 +10,7 @@ stream_connection = stream_socket.accept()[0].makefile('rb')
 print("Stream connection established")
 
 detector_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+detector_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 detector_socket.bind((HOST, DETECTOR_PORT))
 detector_socket.listen()
 detector_connection, _ = detector_socket.accept()
@@ -32,6 +33,8 @@ try:
         #     break
 
         print("Writing to detector")
+        response = "60"
+        detector_connection.sendall(str(response).encode())
 
             
 finally:

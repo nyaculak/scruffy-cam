@@ -26,7 +26,7 @@ try:
         camera.wait_recording(1)
 
         print("Sending detector image")
-        detector_socket.sendall(b'%f,%f' % (num1, num2))
+        detector_socket.sendall(b'%f,%f' % (5, 2))
 
         print("Receiving controller response")
         response = s.recv(1024)
