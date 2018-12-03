@@ -10,7 +10,7 @@ stream_connection = stream_socket.makefile('wb')
 print("Stream connection established")
 
 detector_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-detector_socket.connect((HOST,PORT))
+detector_socket.connect((HOST,DETECTOR_PORT))
 print("Detector connection established")
 
 try:
