@@ -63,7 +63,7 @@ class MotorController():
                 self.start = clock()
             if clock() > self.start2 + dtime2:
                 self.start2 = clock()
-                print "Send Image"
+                print("Send Image")
         finally:
             pass
 
