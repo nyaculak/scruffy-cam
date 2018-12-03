@@ -22,20 +22,6 @@ print("Detector connection established")
 
 angle = 0
 
-def stream_thread():
-    global stream_socket, stream_connection
-    try:
-        cmdline = ['vlc', '--demux', 'h264', '-']
-        player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
-
-        while True:
-            stream_data = stream_connection.read(1024)
-            player.stdin.write(stream_data)
-    finally:
-        stream_connection.close()
-        stream_socket.close()
-        player.terminate()
-
 def detector_thread():
     global detector_socket, detector_connection, angle
     try:
@@ -51,29 +37,38 @@ def detector_thread():
 
 # https://raspberrypi.stackexchange.com/questions/34336/how-to-capture-keyboard-in-python
 def get_key_press():
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(sys.stdin.fileno())
-            ch = sys.stdin.read(1)
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        return ch
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(sys.stdin.fileno())
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return ch
+
+def input_thread():
+    global angle
+    while True:
+        char = get_key_press()
+        if ord(char) == 3:  # ctrl-c
+            break
+        elif char == 'a':   # decrement
+            angle -= 15
+        elif char == 'd':   # increment
+            angle += 15
+        print("Angle is now:", angle)
 
 if __name__ == "__main__":
-    _thread.start_new_thread(stream_thread, ())
     _thread.start_new_thread(detector_thread, ())
-
+    _thread.start_new_thread(input_thread, ())
     try:
+        cmdline = ['vlc', '--demux', 'h264', '-']
+        player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
         while True:
-            char = get_key_press()
-            if ord(char) == 3:  # ctrl-c
-                break
-            elif char == 'a':   # decrement
-                angle -= 15
-            elif char == 'd':   # increment
-                angle += 15
-            print("Angle is now:", angle)
+            stream_data = stream_connection.read(1024)
+            player.stdin.write(stream_data)
     finally:
-        # pygame.quit()
+        stream_connection.close()
+        stream_socket.close()
+        player.terminate()
         sys.exit()
