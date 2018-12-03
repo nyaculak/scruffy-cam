@@ -1,6 +1,9 @@
 import socket
 import subprocess
 import _thread
+import sys
+import tty
+import termios
 from common import HOST, STREAM_PORT, DETECTOR_PORT
 
 stream_socket = socket.socket()
@@ -17,6 +20,8 @@ detector_socket.listen()
 detector_connection, _ = detector_socket.accept()
 print("Detector connection established")
 
+angle = 0
+
 def stream_thread():
     global stream_socket, stream_connection
     try:
@@ -32,21 +37,43 @@ def stream_thread():
         player.terminate()
 
 def detector_thread():
-    global detector_socket, detector_connection
+    global detector_socket, detector_connection, angle
     try:
         while True:
             print("Reading detector data")
             detector_data = detector_connection.recv(1024)
 
             print("Writing to detector")
-            angle = "60"
             detector_connection.sendall(str(angle).encode())
     finally:
         detector_connection.close()
         detector_socket.close()
 
+# https://raspberrypi.stackexchange.com/questions/34336/how-to-capture-keyboard-in-python
+def get_key_press():
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+
 if __name__ == "__main__":
     _thread.start_new_thread(stream_thread, ())
     _thread.start_new_thread(detector_thread, ())
-    while True:
-        pass
+
+    try:
+        while True:
+            char = get_key_press()
+            if ord(char) == 3:  # ctrl-c
+                break
+            elif char == 'a':   # decrement
+                angle -= 15
+            elif char == 'd':   # increment
+                angle += 15
+            print("Angle is now:", angle)
+    finally:
+        # pygame.quit()
+        sys.exit()
