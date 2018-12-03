@@ -13,24 +13,6 @@ detector_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 detector_socket.connect((HOST,DETECTOR_PORT))
 print("Detector connection established")
 
-def stream_thread():
-    global stream_connection
-    global stream_socket
-    try:
-        camera = picamera.PiCamera()
-        camera.resolution = (640, 480)
-        camera.framerate = 24
-        camera.start_preview()
-        time.sleep(2)
-        camera.start_recording(stream_connection, format='h264')
-
-        while True:
-            pass
-    finally:
-        camera.stop_recording()
-        stream_connection.close()
-        stream_socket.close()
-
 def detector_thread():
     global detector_socket
     try:
@@ -46,8 +28,17 @@ def detector_thread():
         detector_socket.close()
 
 if __name__ == "__main__":
-    _thread.start_new_thread(stream_thread,())
     _thread.start_new_thread(detector_thread,())
-
-    while True:
-        pass
+    try:
+        camera = picamera.PiCamera()
+        camera.resolution = (640, 480)
+        camera.framerate = 24
+        camera.start_preview()
+        time.sleep(2)
+        camera.start_recording(stream_connection, format='h264')
+        while True:
+            pass
+    finally:
+        camera.stop_recording()
+        stream_connection.close()
+        stream_socket.close()
