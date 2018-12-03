@@ -1,7 +1,7 @@
 import socket
 import time
 import picamera
-
+import _thread
 from common import HOST, STREAM_PORT, DETECTOR_PORT
 
 stream_socket = socket.socket()
@@ -13,26 +13,41 @@ detector_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 detector_socket.connect((HOST,DETECTOR_PORT))
 print("Detector connection established")
 
-try:
-    camera = picamera.PiCamera()
-    camera.resolution = (640, 480)
-    camera.framerate = 24
-    camera.start_preview()
-    time.sleep(2)
-    camera.start_recording(stream_connection, format='h264')
+def stream_thread():
+    global stream_connection
+    global stream_socket
+    try:
+        camera = picamera.PiCamera()
+        camera.resolution = (640, 480)
+        camera.framerate = 24
+        camera.start_preview()
+        time.sleep(2)
+        camera.start_recording(stream_connection, format='h264')
+
+        while True:
+            pass
+    finally:
+        camera.stop_recording()
+        stream_connection.close()
+        stream_socket.close()
+
+def detector_thread():
+    global detector_socket
+    try:
+        while True:
+            time.sleep(1)
+            print("Sending detector image")
+            detector_socket.sendall(b'%f,%f' % (5, 2))
+
+            print("Receiving controller response")
+            angle = detector_socket.recv(1024).decode()
+            print("Received response:", angle)
+    finally:
+        detector_socket.close()
+
+if __name__ == "__main__":
+    _thread.start_new_thread(stream_thread,())
+    _thread.start_new_thread(detector_thread,())
 
     while True:
-        print("Camera recording 1 sec")
-        camera.wait_recording(1)
-
-        print("Sending detector image")
-        detector_socket.sendall(b'%f,%f' % (5, 2))
-
-        print("Receiving controller response")
-        response = detector_socket.recv(1024)
-        print("Received response:", response.decode())
-finally:
-    camera.stop_recording()
-    stream_connection.close()
-    stream_socket.close()
-    detector_socket.close()
+        pass
