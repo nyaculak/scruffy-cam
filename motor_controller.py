@@ -44,7 +44,7 @@ class MotorController():
 	def __init__(self):
 		pass
 
-	def control(setpoint):
+	def control(self, setpoint):
 		global motor, lastDirection, SLEEP, CLK_PIN, DT_PIN, TICKS_PER_ROTATION
 		global counter, counterTime, MAX_COUNT, lastClkState
 		global KP, THRESH, TOLERANCE

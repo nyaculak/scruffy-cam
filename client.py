@@ -3,6 +3,10 @@ import time
 import picamera
 import _thread
 from common import HOST, STREAM_PORT, DETECTOR_PORT
+from motor_controller import MotorController
+
+setpoint = 0
+motor_controller = MotorController()
 
 stream_socket = socket.socket()
 stream_socket.connect((HOST, STREAM_PORT))
@@ -14,7 +18,7 @@ detector_socket.connect((HOST,DETECTOR_PORT))
 print("Detector connection established")
 
 def detector_thread():
-    global detector_socket
+    global detector_socket, setpoint
     try:
         while True:
             time.sleep(1)
@@ -23,7 +27,7 @@ def detector_thread():
 
             print("Receiving controller response")
             angle = detector_socket.recv(1024).decode()
-            print("Received response:", angle)
+            setpoint = int(angle)
     finally:
         detector_socket.close()
 
@@ -33,11 +37,10 @@ if __name__ == "__main__":
         camera = picamera.PiCamera()
         camera.resolution = (640, 480)
         camera.framerate = 24
-        camera.start_preview()
         time.sleep(2)
         camera.start_recording(stream_connection, format='h264')
         while True:
-            pass
+            motor_controller.control(setpoint)
     finally:
         camera.stop_recording()
         stream_connection.close()
