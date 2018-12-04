@@ -9,6 +9,8 @@ import _thread
 import sys
 import tty
 import termios
+from email_fsm import mail, send_email
+
 from dog_detector import detect_dog
 from common import HOST, STREAM_PORT, CONTROLLER_PORT, DETECTOR_PORT
 
@@ -67,8 +69,8 @@ def detector_thread():
 
             image = Image.open("out.jpg")
             dog_detected = detect_dog(image)
-			if mail(dog_detected):
-				send_email()
+            if mail(dog_detected):
+                send_email()
             print("\t", "Dog?", dog_detected)
 
     finally:

@@ -1,8 +1,8 @@
+import smtplib
+
 #input is true or false
 #output is true or false should send email
 
-global counter
-global state
 counter = 0
 state = 0
 
@@ -13,6 +13,7 @@ sender = '459finalproject@gmail.com'    #Email the message is sent from
 to = '459finalproject@gmail.com'        #Email the password is sent to
 msg = 'Your dog is in the camera'
 def mail(dog_present):
+	global counter, state
 	
 	if(counter > 0):
 		counter = counter - 1
@@ -39,6 +40,7 @@ def mail(dog_present):
 		state = 0
 
 def send_email():
+    global user, password, sender, to, msg
     server = smtplib.SMTP('smtp.gmail.com:587')
     server.ehlo()
     server.starttls()
