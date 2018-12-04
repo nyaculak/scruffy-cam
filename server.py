@@ -26,9 +26,8 @@ def detector_thread():
     global detector_socket, detector_connection, angle
     try:
         while True:
-            print("Reading detector data")
+            print("Receiving ping from client")
             detector_data = detector_connection.recv(1024)
-
             print("Writing to detector")
             detector_connection.sendall(str(angle).encode())
     finally:
@@ -62,7 +61,7 @@ if __name__ == "__main__":
     _thread.start_new_thread(detector_thread, ())
     _thread.start_new_thread(input_thread, ())
     try:
-        cmdline = ['vlc', '--demux', 'h264', '-']
+        cmdline = ['vlc', '--demux', 'mjpeg', '-']
         player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
         while True:
             stream_data = stream_connection.read(1024)
