@@ -21,10 +21,9 @@ def detector_thread():
     global detector_socket, setpoint
     try:
         while True:
-            time.sleep(1)
-            print("Sending detector image")
-            detector_socket.sendall(b'%f,%f' % (5, 2))
-
+            time.sleep(.1)
+            print("Pinging server")
+            detector_socket.sendall(b'ping')
             print("Receiving controller response")
             angle = detector_socket.recv(1024).decode()
             setpoint = int(angle)
@@ -38,7 +37,7 @@ if __name__ == "__main__":
         camera.resolution = (640, 480)
         camera.framerate = 24
         time.sleep(2)
-        camera.start_recording(stream_connection, format='h264')
+        camera.start_recording(stream_connection, format='mjpeg')
         while True:
             motor_controller.control(setpoint)
     finally:
