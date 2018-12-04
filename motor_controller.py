@@ -1,77 +1,83 @@
-'''
-Extended FSM to control the motor
-'''
-
-from Adafruit_MotorHAT import Adafruit_MotorHAT, Adafruit_DCMotor
-
-from time import clock
+import time
 import atexit
 from RPi import GPIO
+from Adafruit_MotorHAT import Adafruit_MotorHAT, Adafruit_DCMotor
 
-#Motor encoder pins
-clk = 17
-dt = 18
+########################################################################################################################
+# motor init
+########################################################################################################################
+mh = Adafruit_MotorHAT(addr=0x60)
+def turnOffMotors():
+    for i in [1, 2, 3, 4]: mh.getMotor(i).run(Adafruit_MotorHAT.RELEASE)
+atexit.register(turnOffMotors)
+motor = mh.getMotor(3)
+motor.run(Adafruit_MotorHAT.FORWARD)
+lastDirection = Adafruit_MotorHAT.FORWARD
 
-#Motor controller constants
-resolution = 1333
-tolerance = 5
-dtime = 0.1
-dtime2 = 5
-speed = 15
+########################################################################################################################
+# encoder init
+########################################################################################################################
+SLEEP = 0.00001
+CLK_PIN = 17
+DT_PIN = 18
+TICKS_PER_ROTATION = 1100 # empirically derived
 
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(CLK_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(DT_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+counter, counterTime = 0, 0
+MAX_COUNT = 100
+lastClkState = GPIO.input(CLK_PIN)
+
+########################################################################################################################
+# controller init
+########################################################################################################################
+KP = 7          # proportional controller constant
+THRESH = 150    # controller max output
+TOLERANCE = 2   # error tolerance (degrees)
+
+########################################################################################################################
+# main
+########################################################################################################################
 class MotorController():
-    def __init__(self):
-        global clk, dt
-        mh = Adafruit_MotorHAT(addr=0x60)
-        atexit.register(turnOffMotors)
-        self.myMotor = mh.getMotor(3)
-        self.myMotor.run(Adafruit_MotorHAT.RELEASE)
-        
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(clk,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
-        GPIO.setup(dt,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
-        
-        self.angle = 0
-        self.counter = 0
-        self.self.start = 0
-        self.start = clock()
-        self.self.start2 = start
-        self.clkLastState = GPIO.input(clk)
-    
-    def control(setpoint):
-        global resolution,tolerance,dtime,dtime2,speed
-        try:
-            self.myMotor.setSpeed(speed)
-            
-            if setpoint > angle + float(tolerance/resolution):
-                self.myMotor.run(Adafruit_MotorHAT.FORWARD)
-            elif setpoint < angle - float(tolerance/resolution):
-                self.myMotor.run(Adafruit_MotorHAT.BACKWARD)
-            else:
-                self.myMotor.run(Adafruit_MotorHAT.RELEASE)
-            dtState = GPIO.input(dt)
-            clkState = GPIO.input(clk)
-            if clkState != self.clkLastState:
-                if dtState != clkState:
-                    self.counter += 1
-                else:
-                    self.counter -= 1
-            self.clkLastState = clkState
-            if clock() > self.start + dtime:
-                self.angle = self.angle + float(counter)/(float(resolution))
-                self.counter = 0
-                self.start = clock()
-            if clock() > self.start2 + dtime2:
-                self.start2 = clock()
-                print("Send Image")
-        finally:
-            pass
+	def __init__(self):
+		pass
 
-    # recommended for auto-disabling motors on shutdown!
-    def turnOffMotors():
-        mh.getMotor(1).run(Adafruit_MotorHAT.RELEASE)
-        mh.getMotor(2).run(Adafruit_MotorHAT.RELEASE)
-        mh.getMotor(3).run(Adafruit_MotorHAT.RELEASE)
-        mh.getMotor(4).run(Adafruit_MotorHAT.RELEASE)
+	def control(setpoint):
+		global motor, lastDirection, SLEEP, CLK_PIN, DT_PIN, TICKS_PER_ROTATION
+		global counter, counterTime, MAX_COUNT, lastClkState
+		global KP, THRESH, TOLERANCE
 
-    
+		clkState = GPIO.input(CLK_PIN)
+		dtState = GPIO.input(DT_PIN)
+		if clkState != lastClkState and dtState != clkState:
+			counter -= 1
+		elif clkState != lastClkState:
+			counter += 1
+		lastClkState = clkState
+		counterTime = counterTime + 1
+
+		if counterTime == MAX_COUNT:
+			counterTime = 0
+			
+			motorAngle = (counter / TICKS_PER_ROTATION * 360) % 360
+			error = setpoint - motorAngle
+			if error > 180: # handle discontinuity about 360 and 0
+				error = error - 360
+			if error < -180:
+				error = error + 360
+			print("Angle:", motorAngle, "\t", "Error:", error)
+			
+			motorCommand = int(abs(error)) * KP
+			if abs(error) < TOLERANCE:
+				motorCommand = 0
+			elif motorCommand > THRESH:
+				motorCommand = THRESH
+			motorDirection = Adafruit_MotorHAT.BACKWARD if error >= 0 else Adafruit_MotorHAT.FORWARD
+			
+			if motorDirection != lastDirection:
+				motor.run(motorDirection)
+			motor.setSpeed(motorCommand)
+			lastDirection = motorDirection
+		time.sleep(SLEEP)
