@@ -25,7 +25,7 @@ if __name__ == "__main__":
             detector_connection.write(stream.read())
             stream.seek(0)
             stream.truncate()
-    detector_connection.write(struct.pack('<L', 0))
+        detector_connection.write(struct.pack('<L', 0))
     finally:
         camera.stop_recording()
         detector_connection.close()
