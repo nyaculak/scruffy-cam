@@ -67,6 +67,8 @@ def detector_thread():
 
             image = Image.open("out.jpg")
             dog_detected = detect_dog(image)
+			if mail(dog_detected):
+				send_email()
             print("\t", "Dog?", dog_detected)
 
     finally:
