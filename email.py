@@ -7,6 +7,11 @@ counter = 0
 state = 0
 
 
+user = '459finalproject@gmail.com'                #Gmail login username
+password = 'yasser459'        #Gmail login password
+sender = '459finalproject@gmail.com'    #Email the message is sent from
+to = '459finalproject@gmail.com'        #Email the password is sent to
+msg = 'Your dog is in the camera'
 def mail(dog_present):
 	
 	if(counter > 0):
@@ -33,8 +38,9 @@ def mail(dog_present):
 		counter = 100
 		state = 0
 
-
-
-
-	
-
+def send_email():
+    server = smtplib.SMTP('smtp.gmail.com:587')
+    server.ehlo()
+    server.starttls()
+    server.login(user,password)
+    server.sendmail(sender,to,msg)
