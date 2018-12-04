@@ -1,5 +1,7 @@
 import socket
 import time
+import struct
+import io
 import picamera
 from common import HOST, DETECTOR_PORT
 
