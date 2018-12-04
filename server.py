@@ -4,7 +4,7 @@ import _thread
 import sys
 import tty
 import termios
-from common import HOST, STREAM_PORT, DETECTOR_PORT
+from common import HOST, STREAM_PORT, CONTROLLER_PORT, DETECTOR_PORT
 
 stream_socket = socket.socket()
 stream_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -12,6 +12,13 @@ stream_socket.bind((HOST, STREAM_PORT))
 stream_socket.listen(0)
 stream_connection = stream_socket.accept()[0].makefile('rb')
 print("Stream connection established")
+
+controller_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+controller_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+controller_socket.bind((HOST, CONTROLLER_PORT))
+controller_socket.listen()
+controller_connection, _ = controller_socket.accept()
+print("Controller connection established")
 
 detector_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 detector_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -22,17 +29,17 @@ print("Detector connection established")
 
 angle = 0
 
-def detector_thread():
-    global detector_socket, detector_connection, angle
+def controller_thread():
+    global controller_socket, controller_connection, angle
     try:
         while True:
             print("Receiving ping from client")
-            detector_data = detector_connection.recv(1024)
+            detector_data = controller_connection.recv(1024)
             print("Writing to detector")
-            detector_connection.sendall(str(angle).encode())
+            controller_connection.sendall(str(angle).encode())
     finally:
-        detector_connection.close()
-        detector_socket.close()
+        controller_connection.close()
+        controller_socket.close()
 
 # https://raspberrypi.stackexchange.com/questions/34336/how-to-capture-keyboard-in-python
 def get_key_press():
@@ -58,7 +65,7 @@ def input_thread():
         print("Angle is now:", angle)
 
 if __name__ == "__main__":
-    _thread.start_new_thread(detector_thread, ())
+    _thread.start_new_thread(controller_thread, ())
     _thread.start_new_thread(input_thread, ())
     try:
         cmdline = ['vlc', '--demux', 'mjpeg', '-']
