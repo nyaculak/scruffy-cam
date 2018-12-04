@@ -146,6 +146,14 @@ for image_path in TEST_IMAGE_PATHS:
       instance_masks=output_dict.get('detection_masks'),
       use_normalized_coordinates=True,
       line_thickness=8)
+
+  if(output_dict['detection_classes'][0] == 18 or output_dict['detection_classes'][1] == 18 or output_dict['detection_classes'][2] == 18
+      or output_dict['detection_classes'][3] == 18):
+    print("True")
+  else:
+    print("False")
+
+
   plt.figure(figsize=IMAGE_SIZE)
   plt.imshow(image_np)
 
