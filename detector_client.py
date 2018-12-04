@@ -18,7 +18,7 @@ if __name__ == "__main__":
         time.sleep(2)
         
         stream = io.BytesIO()
-		while True:
+        while True:
             camera.capture(stream, 'jpeg'):
             detector_connection.write(struct.pack('<L', stream.tell()))
             detector_connection.flush()
@@ -26,7 +26,7 @@ if __name__ == "__main__":
             detector_connection.write(stream.read())
             stream.seek(0)
             stream.truncate()
-			time.sleep(10)
+            time.sleep(10)
         detector_connection.write(struct.pack('<L', 0))
     finally:
         detector_connection.close()
