@@ -17,13 +17,13 @@ if __name__ == "__main__":
         
         stream = io.BytesIO()
         for foo in camera.capture_continuous(stream, 'jpeg'):
-            connection.write(struct.pack('<L', stream.tell()))
-            connection.flush()
+            detector_connection.write(struct.pack('<L', stream.tell()))
+            detector_connection.flush()
             stream.seek(0)
-            connection.write(stream.read())
+            detector_connection.write(stream.read())
             stream.seek(0)
             stream.truncate()
-    connection.write(struct.pack('<L', 0))
+    detector_connection.write(struct.pack('<L', 0))
     finally:
         camera.stop_recording()
         detector_connection.close()
