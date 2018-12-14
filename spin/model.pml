@@ -1,5 +1,6 @@
-// input
-bool prev_detected = false;
+// store last 3 inputs to the system
+bool ppdetected = false;
+bool pdetected = false;
 bool detected = false;
 
 // output
@@ -8,51 +9,62 @@ bool send_email;
 // state
 int state = 0;
 
-// variables
-int counter = 0;
-
 active proctype email() {
     printf("\n");
-    int bound = 10;
+    int bound = 100;
     do :: (bound > 0) ->
+        // Environment: nondeterministic FSM
         if
         :: true -> 
-            prev_detected = detected;
+            ppdetected = pdetected;
+            pdetected = detected;
             detected = 0;
         :: true -> 
-            prev_detected = detected;
+            ppdetected = pdetected;
+            pdetected = detected;
             detected = 1;
         fi;
-        printf("Detected: %d   (Prev) %d \n", detected, prev_detected)
+        printf("%d %d %d\n", ppdetected, pdetected, detected);
 
+        // System: deterministic FSM
         if
-        :: (state == 0 && counter > 0) ->
-            counter = counter - 1;
+        :: (state == 0 && !detected) ->
             state = 0;
-        :: (state == 0 && counter == 0 && !detected) ->
-            state = 0;
-        :: (state == 0 && counter == 0 && detected) ->
+        :: (state == 0 && detected) ->
             state = 1;
         :: (state == 1 && !detected) ->
             state = 0;
         :: (state == 1 && detected) ->
-            state = 2
-            SENDING:
+            state = 2;
             send_email = true;
             printf("\tSend email\n");
         :: (state == 2 && detected) ->
-            state = 2
+            state = 2;
             send_email = false;
         :: (state == 2 && !detected) ->
-            counter = 10
-            state = 0
+            state = 0;
             send_email = false;
         fi;
+
+        // Label to specify the "return" part of the FSM function
+        RETURN:
         bound = bound - 1;
     od;
     printf("End Simulation\n");
 }
 
-// ltl invar { []((prev_detected && detected) -> <>(send_email)) }
-// ltl invariant2 {<>(counter==10) -> <>(counter==2)}
-ltl invariant { [] (email@SENDING -> (prev_detected && detected)) }
+// Test the output of the system based only on the last 3 inputs
+
+// If any of the last two inputs are misses, no email should be sent
+// ltl email_fails_at_zero_or_one {[]( (!detected || !pdetected) && email@RETURN -> !send_email )}
+
+// If the last two inputs are hits, but the one before is a miss, the email should be sent
+// ltl email_sends_at_exactly_two {[] (!ppdetected && pdetected && detected && email@RETURN -> send_email)}
+
+// If the last three or more inputs were hits, another email should not be sent
+// ltl email_fails_at_three_or_more {[] (ppdetected && email@RETURN -> !send_email)}
+
+// These logical implications can be combined into a single logical equivalence
+ltl invariant {[]( 
+    !ppdetected && pdetected && detected && email@RETURN <-> send_email && email@RETURN
+)}
